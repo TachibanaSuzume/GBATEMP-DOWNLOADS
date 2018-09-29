@@ -15,7 +15,7 @@
 #define DATAPINDOTSTAR    41
 #define LED_CONFIRM_TIME_us 2000000 // How long to show red or green light for success or fail - 2 seconds
 
-#include "s2load.h"
+#include "hekateload.h"
 
 #define INTERMEZZO_SIZE 92
 const byte intermezzo[INTERMEZZO_SIZE] =

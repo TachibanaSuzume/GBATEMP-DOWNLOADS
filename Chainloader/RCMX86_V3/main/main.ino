@@ -3,15 +3,18 @@
 #include <Arduino.h>
 #include <Usb.h>
 #include <Adafruit_DotStar.h>
-#define WAKEUP_PIN_FALLING 4       // Method 2 pin to ground (power switch solder to switched side of 150R resistor)
-#define WAKEUP_PIN_RISING 2        // Method 3 pin to M92T36 pin 5 capacitor / rail
-#define JOYCON_STRAP_PIN 3            // Solder to pin 10 on joycon rail
-#define RCM_STRAP_TIME_us 1000000  // Amount of time to hold RCM_STRAP low and then launch payload
-#define VOLUP_STRAP_PIN 0         // Use with Method 3 only. With method 2, the trinket doesn`t boot fast enough. Bootloader needs modification
-#define ONBOARD_LED 13
+//#define WAKEUP_PIN_FALLING 2       // Method 2 pin to ground (power switch solder to switched side of 150R resistor)
+//#define WAKEUP_PIN_RISING 4        // Method 3 pin to M92T36 pin 5 capacitor / rail
+//#define JOYCON_STRAP_PIN 3            // Solder to pin 10 on joycon rail
+//#define RCM_STRAP_TIME_us 1000000  // Amount of time to hold RCM_STRAP low and then launch payload
+//#define VOLUP_STRAP_PIN 0         // Use with Method 3 only. With method 2, the trinket doesn`t boot fast enough. Bootloader needs modification
+#define ONBOARD_LED 4
 #define LED_CONFIRM_TIME_us 2000000 // How long to show red or green light for success or fail - 2 seconds
+#define USBCC_PIN 2
+#define USB_VCC_PIN 0
+#define DCDC_EN_PIN 3
 
-#include "s2load.h"
+#include "hekateload.h"
 
 #define INTERMEZZO_SIZE 92
 const byte intermezzo[INTERMEZZO_SIZE] =
@@ -247,43 +250,33 @@ void setLedColor(const char color[]) {
   strip.show();
 }
 
-void wakeup_rising(){
-  // Both straps Low
-  pinMode(JOYCON_STRAP_PIN, OUTPUT);
-  pinMode(VOLUP_STRAP_PIN, OUTPUT);
-  digitalWrite(JOYCON_STRAP_PIN, LOW);
-  digitalWrite(VOLUP_STRAP_PIN, LOW);
-  setLedColor("blue");
-  // 1 second
-  delayMicroseconds(RCM_STRAP_TIME_us);
-  SCB->AIRCR = ((0x5FA << SCB_AIRCR_VECTKEY_Pos) | SCB_AIRCR_SYSRESETREQ_Msk); //full software reset
-}
-
-void wakeup_falling(){
-  // Both Straps Low
-  pinMode(JOYCON_STRAP_PIN, OUTPUT);
-  pinMode(VOLUP_STRAP_PIN, OUTPUT);
-  digitalWrite(JOYCON_STRAP_PIN, LOW);
-  digitalWrite(VOLUP_STRAP_PIN, LOW);
-  setLedColor("green");
-  // 1 second
-  delayMicroseconds(RCM_STRAP_TIME_us);
-  SCB->AIRCR = ((0x5FA << SCB_AIRCR_VECTKEY_Pos) | SCB_AIRCR_SYSRESETREQ_Msk); //full software reset
-}
-
 void setup()
 {
   // This continues after the reset after a wakeup_rising or wakeup_falling
   // Set straps as input to "stealth" any funny business on the RCM_STRAP
-  pinMode(JOYCON_STRAP_PIN, INPUT);
-  pinMode(VOLUP_STRAP_PIN, INPUT);
-  pinMode(WAKEUP_PIN_RISING, INPUT);
-  pinMode(WAKEUP_PIN_FALLING, INPUT_PULLUP);
+  //pinMode(JOYCON_STRAP_PIN, INPUT);
+  //pinMode(VOLUP_STRAP_PIN, INPUT);
+  //pinMode(WAKEUP_PIN_RISING, INPUT);
+  //pinMode(WAKEUP_PIN_FALLING, INPUT_PULLUP);
 
   // Before sleeping, make sure that we can wake up again when the switch turns on
   // by attaching interrupts to the wakeup pins
-  attachInterrupt(WAKEUP_PIN_RISING, wakeup_rising, RISING);
-  attachInterrupt(WAKEUP_PIN_FALLING, wakeup_falling, FALLING);
+  //attachInterrupt(WAKEUP_PIN_RISING, wakeup_rising, RISING);
+  //attachInterrupt(WAKEUP_PIN_FALLING, wakeup_falling, FALLING);
+  pinMode(DCDC_EN_PIN, OUTPUT);
+  digitalWrite(DCDC_EN_PIN, HIGH);
+  pinMode(USBCC_PIN, INPUT);   
+  pinMode(USB_VCC_PIN, INPUT_PULLDOWN);
+    
+  digitalWrite(ONBOARD_LED, LOW);
+  digitalWrite(ONBOARD_LED, HIGH);delay(30);
+  digitalWrite(ONBOARD_LED, LOW); 
+  /*
+  delay(300);  
+  */
+  while(digitalRead(USB_VCC_PIN));
+  delay(30);//delay to ready pull out
+  while(digitalRead(USB_VCC_PIN));
   EIC->WAKEUP.vec.WAKEUPEN |= (1<<6);
 
   strip.begin();
@@ -314,8 +307,8 @@ void setup()
       blink = !blink;
       lastCheckTime = currentTime;
     }
-    if (currentTime > 1500) {
-      sleep(-1);
+    if (currentTime > 30000) {
+      SCB->AIRCR = ((0x5FA << SCB_AIRCR_VECTKEY_Pos) | SCB_AIRCR_SYSRESETREQ_Msk); //full software reset;
     }
 
   }
