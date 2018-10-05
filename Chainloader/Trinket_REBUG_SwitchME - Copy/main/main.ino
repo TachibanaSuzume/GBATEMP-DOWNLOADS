@@ -1,29 +1,26 @@
 // Sam_fusee_launcher - Credits to quantum_cross for original code
-// Mattytrogs multi-payload
+// Mattytrogs multi-payload. This is single payload version
 #include <Arduino.h>
 #include <Usb.h>
 #include <Adafruit_DotStar.h>
 #include <FlashStorage.h>
 
 //CHANGEABLE VALUES!!! CHANGE THE VALUES BELOW TO YOUR LIKING
-#define AMOUNT_OF_PAYLOADS 8         //Set number of payloads required. 1 - 8.
-#define AUTO_INCREASE_PAYLOAD_on 1   //Automatic increase payload when send fails. 1 = on, 0 = off
-#define AUTO_SEND_ON_PAYLOAD_INCREASE_PIN 1  //Automatic send when payload pin is activated. 1 = on, 0 = off
-#define FLASH_BEFORE_SEND_on 0  //Flash payload number before attempting to send. 1 = on, 0 = off
-#define FLASH_AFTER_SEND_on 1 //Flash payload number after send/attempted. Will show same payload number(if autoincrease is off, or next payload number) 1 = on, 0 = off
-#define LOOK_FOR_TEGRA_SECONDS 5 //How long to look for Tegra for & flash LED in search phase. Time in seconds
-#define LOOK_FOR_TEGRA_LED_SPEED 100 //How fast to blink when searching.
-#define DELAY_BEFORE_FLASH_WRITE_SECONDS 2 //Get out of jail card. Press reset during this time and payload won`t be increased
-#define ENABLE_STRAPS_ON_HARD_RESET 0 //If on, will drop straps at every cold-boot as well as when wakeup occurs. If all straps are disabled, this will have no effect
-#define ENABLE_ALL_STRAPS 1 //All straps are enabled / disabled, in all circumstances. 0 = Disabled. 1 = Enabled
-#define RESET_INSTEAD_OF_SLEEP 0 //Instead of sleeping after look for Tegra timeout, device will reset. This will loop until Tegra is found. Affects autoincrease. 1 = On, 0 = Off
+#define AMOUNT_OF_PAYLOADS 1         //set number of payloads required. 1 - 8. Leave unchanged for standard mode!!!
+#define AUTO_INCREASE_PAYLOAD_on 0   //Automatic increase payload when send fails. 1 = on, 0 = off
+#define AUTO_SEND_ON_PAYLOAD_INCREASE_PIN 0  // Automatic send when payload pin is activated. 1 = on, 0 = off
+#define FLASH_BEFORE_SEND_on 0  // flash payload number before attempting to send. 1 = on, 0 = off
+#define FLASH_AFTER_SEND_on 0   // flash payload number after send/attempted. Will show same payload number(if autoincrease is off, or next payload number) 1 = on, 0 = off
+#define LOOK_FOR_TEGRA_SECONDS 5       // how long to look for Tegra for & flash LED in search phase. Time in seconds
+#define LOOK_FOR_TEGRA_LED_SPEED 300 // how fast to blink when searching.
+#define DELAY_BEFORE_FLASH_WRITE_SECONDS 2 //get out of jail card. Press reset during this time and payload won`t be increased
 
 //set input/output pin numbers & times
-#define PAYLOAD_INCREASE_PIN 1     // Payload increase pin - touch to ground by default.
+//#define PAYLOAD_INCREASE_PIN 1               //payload increase pin - touch to ground by default.
 #define WAKEUP_PIN_FALLING 4       // Method 2 pin to ground (power switch solder to switched side of 150R resistor)
 #define WAKEUP_PIN_RISING 2        // Method 3 pin to M92T36 pin 5 capacitor / rail
-#define JOYCON_STRAP_PIN 3         // Solder to pin 10 on joycon rail
-#define VOLUP_STRAP_PIN 0          // Use with Method 3 only. With method 2, the trinket doesn`t boot fast enough. Bootloader needs modification
+#define JOYCON_STRAP_PIN 3            // Solder to pin 10 on joycon rail
+#define VOLUP_STRAP_PIN 0         // Use with Method 3 only. With method 2, the trinket doesn`t boot fast enough. Bootloader needs modification
 
 //set LED on/off times
 #define PAYLOAD_FLASH_LED_ON_TIME_SECONDS 0.05 // controls blink during payload indication. On
@@ -35,7 +32,7 @@
 #define ONBOARD_LED 13
 
 //includes
-#include "payload1.h"
+#include "s2load.h"
 #include "usb_setup.h"
 
 FlashStorage(stored_payload, int);
@@ -45,25 +42,24 @@ int autoincrease = AUTO_INCREASE_PAYLOAD_on;
 int newpayload = storedpayload;
 int startblink = 1;
 int currentblink;
-
+int fadestart = 0;
+int fadefinish = 255;
 void dropstraps() {
-  if (ENABLE_ALL_STRAPS == 1) {
   pinMode(JOYCON_STRAP_PIN, OUTPUT);
   pinMode(VOLUP_STRAP_PIN, OUTPUT);
   pinMode(ONBOARD_LED, OUTPUT);
   digitalWrite(JOYCON_STRAP_PIN, LOW);
   digitalWrite(VOLUP_STRAP_PIN, LOW);
   delayMicroseconds (RCM_STRAP_TIME_us);
-  } else return;
 }
 
-void normalstraps() {
+void normalstraps(){
   pinMode(JOYCON_STRAP_PIN, INPUT);
   pinMode(VOLUP_STRAP_PIN, INPUT);
   pinMode(WAKEUP_PIN_RISING, INPUT);
   pinMode(WAKEUP_PIN_FALLING, INPUT_PULLUP);
-  pinMode(PAYLOAD_INCREASE_PIN, INPUT_PULLUP);
-} 
+  //pinMode(PAYLOAD_INCREASE_PIN, INPUT_PULLUP); 
+}
 void firstboot() {
 
   if (!newpayload) {
@@ -129,7 +125,6 @@ void setPayloadColor(int payloadcolornumber) {
 
 void wakeup() { 
   dropstraps();
-  normalstraps();
   SCB->AIRCR = ((0x5FA << SCB_AIRCR_VECTKEY_Pos) | SCB_AIRCR_SYSRESETREQ_Msk); //full software reset
 }
 
@@ -147,6 +142,20 @@ void blink_led() {
   delayMicroseconds(PAYLOAD_FLASH_LED_OFF_TIME_SECONDS * 1000000);
 }  
 
+void fade_led() {
+  for (fadestart = 0; fadestart < fadefinish; ++fadestart) {
+  strip.setPixelColor(0, 0 , 0, fadestart);
+  strip.show();
+  delay(2);
+  } 
+  fadestart = 0;
+  for (fadefinish = 255; fadefinish > fadestart; --fadefinish) {
+  strip.setPixelColor(0, 0 , 0, fadefinish);
+  strip.show();
+  delay(2);
+  }
+  fadefinish = 255;
+}  
 //choose and flash LED
 void increase_payload() {
   ++newpayload;
@@ -201,7 +210,7 @@ void sleep(int errorCode) {
 void setinterrupts() {
   attachInterrupt(WAKEUP_PIN_RISING, wakeup, RISING);
   attachInterrupt(WAKEUP_PIN_FALLING, wakeup, FALLING);
-  attachInterrupt(PAYLOAD_INCREASE_PIN, increase_payload, FALLING);
+  //attachInterrupt(PAYLOAD_INCREASE_PIN, increase_payload, FALLING);
   EIC->WAKEUP.vec.WAKEUPEN |= (1 << 6);
 }
 
@@ -228,23 +237,20 @@ void lookfortegra() {
     delay(1);
     if ((currentTime) > lastCheckTime + LOOK_FOR_TEGRA_LED_SPEED) {
       usb.ForEachUsbDevice(&findTegraDevice);
-      if (blink && !foundTegra) {
-        setPayloadColor(newpayload);
-        digitalWrite(ONBOARD_LED, HIGH);
+      if (!foundTegra) {
+       fade_led();
       } else {
         setLedColor("black");
         digitalWrite(ONBOARD_LED, LOW);
       }
-      blink = !blink;
+      //blink = !blink;
       lastCheckTime = currentTime;
     }
     if (currentTime > (LOOK_FOR_TEGRA_SECONDS * 1000)) {
       writetoflash();
-      if (RESET_INSTEAD_OF_SLEEP == 1) {
-        NVIC_SystemReset();
-      } else sleep(-1);
-      }
+      sleep(-1);
     }
+  }
   pushpayload();
 }
 
@@ -261,22 +267,22 @@ void pushpayload() {
   UHD_Pipe_Alloc(tegraDeviceAddress, 0x01, USB_HOST_PTYPE_BULK, USB_EP_DIR_OUT, 0x40, 0, USB_HOST_NB_BK_1);
   packetsWritten = 0;
   if (newpayload == 1) {
-    sendPayload(fuseeBin1, FUSEE_BIN_SIZE1);
-  } else if (newpayload == 2) {
-    sendPayload(fuseeBin2, FUSEE_BIN_SIZE2);
-  } else if (newpayload == 3) {
-    sendPayload(fuseeBin3, FUSEE_BIN_SIZE3);
-  } else if (newpayload == 4) {
-    sendPayload(fuseeBin4, FUSEE_BIN_SIZE4);
-  } else if (newpayload == 5) {
-    sendPayload(fuseeBin5, FUSEE_BIN_SIZE5);
-  } else if (newpayload == 6) {
-    sendPayload(fuseeBin6, FUSEE_BIN_SIZE6);
-  } else if (newpayload == 7) {
-    sendPayload(fuseeBin7, FUSEE_BIN_SIZE7);
-  } else if (newpayload == 8) {
-    sendPayload(fuseeBin8, FUSEE_BIN_SIZE8);
-  }
+    sendPayload(fuseeBin, FUSEE_BIN_SIZE); //sendPayload(fuseeBin1, FUSEE_BIN_SIZE1);
+  } //else if (newpayload == 2) {
+    //sendPayload(fuseeBin2, FUSEE_BIN_SIZE2);
+  //} else if (newpayload == 3) {
+    //sendPayload(fuseeBin3, FUSEE_BIN_SIZE3);
+  //} else if (newpayload == 4) {
+    //sendPayload(fuseeBin4, FUSEE_BIN_SIZE4);
+  //} else if (newpayload == 5) {
+    //sendPayload(fuseeBin5, FUSEE_BIN_SIZE5);
+  //} else if (newpayload == 6) {
+    //sendPayload(fuseeBin6, FUSEE_BIN_SIZE6);
+  //} else if (newpayload == 7) {
+    //sendPayload(fuseeBin7, FUSEE_BIN_SIZE7);
+  //} else if (newpayload == 8) {
+    //sendPayload(fuseeBin8, FUSEE_BIN_SIZE8);
+  //}
   if (packetsWritten % 2 != 1)
   {
     DEBUG_PRINTLN("Switching to higher buffer...");
@@ -296,12 +302,10 @@ void pushpayload() {
 void setup()
 {
   usb.Task(); //host mode
-  if (ENABLE_STRAPS_ON_HARD_RESET == 1) {
-  dropstraps(); //pull straps low
-  }
-  normalstraps();
-  setinterrupts();
+  //dropstraps(); //pull straps low
+  normalstraps(); //stop them misbehaving
   firstboot(); //get flash memory status. If invalid, make valid.
+  setinterrupts();
   lookfortegra();
 }
 
