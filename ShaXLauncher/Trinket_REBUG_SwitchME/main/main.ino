@@ -10,12 +10,12 @@
 #define AUTO_INCREASE_PAYLOAD_on 1   //Automatic increase payload when send fails. 1 = on, 0 = off
 #define AUTO_SEND_ON_PAYLOAD_INCREASE_PIN 1  //Automatic send when payload pin is activated. 1 = on, 0 = off
 #define FLASH_BEFORE_SEND_on 0  //Flash payload number before attempting to send. 1 = on, 0 = off
-#define FLASH_AFTER_SEND_on 1 //Flash payload number after send/attempted. Will show same payload number(if autoincrease is off, or next payload number) 1 = on, 0 = off
+#define FLASH_AFTER_SEND_on 0 //Flash payload number after send/attempted. Will show same payload number(if autoincrease is off, or next payload number) 1 = on, 0 = off
 #define LOOK_FOR_TEGRA_SECONDS 5 //How long to look for Tegra for & flash LED in search phase. Time in seconds
 #define LOOK_FOR_TEGRA_LED_SPEED 100 //How fast to blink when searching.
 #define DELAY_BEFORE_FLASH_WRITE_SECONDS 2 //Get out of jail card. Press reset during this time and payload won`t be increased
 #define ENABLE_STRAPS_ON_HARD_RESET 0 //If on, will drop straps at every cold-boot as well as when wakeup occurs. If all straps are disabled, this will have no effect
-#define ENABLE_ALL_STRAPS 1 //All straps are enabled / disabled, in all circumstances. 0 = Disabled. 1 = Enabled
+#define ENABLE_ALL_STRAPS 0 //All straps are enabled / disabled, in all circumstances. 0 = Disabled. 1 = Enabled
 #define RESET_INSTEAD_OF_SLEEP 0 //Instead of sleeping after look for Tegra timeout, device will reset. This will loop until Tegra is found. Affects autoincrease. 1 = On, 0 = Off
 
 //set input/output pin numbers & times
