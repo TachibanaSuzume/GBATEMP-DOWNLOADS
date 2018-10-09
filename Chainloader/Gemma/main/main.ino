@@ -17,10 +17,10 @@
 
 //set input/output pin numbers & times
 //#define PAYLOAD_INCREASE_PIN 1               //payload increase pin - touch to ground by default.
-#define WAKEUP_PIN_FALLING 0       // Method 2 pin to ground (power switch solder to switched side of 150R resistor)
+//#define WAKEUP_PIN_FALLING 0       // Method 2 pin to ground (power switch solder to switched side of 150R resistor)
 #define WAKEUP_PIN_RISING 1        // Method 3 pin to M92T36 pin 5 capacitor / rail
 #define JOYCON_STRAP_PIN 2            // Solder to pin 10 on joycon rail
-//#define VOLUP_STRAP_PIN 0         // Use with Method 3 only. With method 2, the trinket doesn`t boot fast enough. Bootloader needs modification
+#define VOLUP_STRAP_PIN 0         // Use with Method 3 only. With method 2, the trinket doesn`t boot fast enough. Bootloader needs modification
 
 //set LED on/off times
 #define PAYLOAD_FLASH_LED_ON_TIME_SECONDS 0.05 // controls blink during payload indication. On
@@ -32,7 +32,7 @@
 #define ONBOARD_LED 13
 
 //includes
-#include "s2load.h"
+#include "hekateload.h"
 #include "usb_setup.h"
 
 FlashStorage(stored_payload, int);
@@ -45,18 +45,18 @@ int currentblink;
 
 void dropstraps() {
   pinMode(JOYCON_STRAP_PIN, OUTPUT);
-  //pinMode(VOLUP_STRAP_PIN, OUTPUT);
+  pinMode(VOLUP_STRAP_PIN, OUTPUT);
   pinMode(ONBOARD_LED, OUTPUT);
   digitalWrite(JOYCON_STRAP_PIN, LOW);
-  //digitalWrite(VOLUP_STRAP_PIN, LOW);
+  digitalWrite(VOLUP_STRAP_PIN, LOW);
   delayMicroseconds (RCM_STRAP_TIME_us);
 }
 
 void normalstraps(){
   pinMode(JOYCON_STRAP_PIN, INPUT);
-  //pinMode(VOLUP_STRAP_PIN, INPUT);
+  pinMode(VOLUP_STRAP_PIN, INPUT);
   pinMode(WAKEUP_PIN_RISING, INPUT);
-  pinMode(WAKEUP_PIN_FALLING, INPUT_PULLUP);
+  //pinMode(WAKEUP_PIN_FALLING, INPUT_PULLUP);
   //pinMode(PAYLOAD_INCREASE_PIN, INPUT_PULLUP); 
 }
 void firstboot() {
@@ -194,7 +194,7 @@ void sleep(int errorCode) {
 
 void setinterrupts() {
   attachInterrupt(WAKEUP_PIN_RISING, wakeup, RISING);
-  attachInterrupt(WAKEUP_PIN_FALLING, wakeup, FALLING);
+  //attachInterrupt(WAKEUP_PIN_FALLING, wakeup, FALLING);
   //attachInterrupt(PAYLOAD_INCREASE_PIN, increase_payload, FALLING);
   EIC->WAKEUP.vec.WAKEUPEN |= (1 << 6);
 }

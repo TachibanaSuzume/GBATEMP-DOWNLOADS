@@ -11,7 +11,7 @@
 #define AUTO_SEND_ON_PAYLOAD_INCREASE_PIN 0  // Automatic send when payload pin is activated. 1 = on, 0 = off
 #define FLASH_BEFORE_SEND_on 0  // flash payload number before attempting to send. 1 = on, 0 = off
 #define FLASH_AFTER_SEND_on 0   // flash payload number after send/attempted. Will show same payload number(if autoincrease is off, or next payload number) 1 = on, 0 = off
-#define LOOK_FOR_TEGRA_SECONDS 5       // how long to look for Tegra for & flash LED in search phase. Time in seconds
+#define LOOK_FOR_TEGRA_SECONDS 30       // how long to look for Tegra for & flash LED in search phase. Time in seconds
 #define LOOK_FOR_TEGRA_LED_SPEED 300 // how fast to blink when searching.
 #define DELAY_BEFORE_FLASH_WRITE_SECONDS 2 //get out of jail card. Press reset during this time and payload won`t be increased
 
@@ -42,8 +42,10 @@ int autoincrease = AUTO_INCREASE_PAYLOAD_on;
 int newpayload = storedpayload;
 int startblink = 1;
 int currentblink;
-int fadestart = 0;
+int fadestart = 1;
+int fadechanging = 1;
 int fadefinish = 255;
+bool flipswitch = true;
 void dropstraps() {
   pinMode(JOYCON_STRAP_PIN, OUTPUT);
   pinMode(VOLUP_STRAP_PIN, OUTPUT);
@@ -143,19 +145,32 @@ void blink_led() {
 }  
 
 void fade_led() {
-  for (fadestart = 0; fadestart < fadefinish; ++fadestart) {
+while (flipswitch) {
+  fadestart = fadestart + 1;
   strip.setPixelColor(0, 0 , 0, fadestart);
   strip.show();
-  delay(2);
-  } 
-  fadestart = 0;
-  for (fadefinish = 255; fadefinish > fadestart; --fadefinish) {
-  strip.setPixelColor(0, 0 , 0, fadefinish);
-  strip.show();
-  delay(2);
+  delay(1);
+  if (fadestart >= 255) {
+    flipswitch = false;
+    return;
   }
-  fadefinish = 255;
-}  
+  fade_led();
+ }
+  
+  
+while (!flipswitch) {
+  fadestart = fadestart - 1;
+  strip.setPixelColor(0, 0 , 0, fadestart);
+  strip.show();
+  delay(1);
+  if (fadestart <= 1) {
+    flipswitch = true;
+    return;
+  }
+ fade_led();
+}
+}
+
 //choose and flash LED
 void increase_payload() {
   ++newpayload;
@@ -234,7 +249,6 @@ void lookfortegra() {
   {
     usb.Task();
     ++currentTime;
-    delay(1);
     if ((currentTime) > lastCheckTime + LOOK_FOR_TEGRA_LED_SPEED) {
       usb.ForEachUsbDevice(&findTegraDevice);
       if (!foundTegra) {
