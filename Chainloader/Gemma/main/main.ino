@@ -14,6 +14,7 @@
 #define LOOK_FOR_TEGRA_SECONDS 5       // how long to look for Tegra for & flash LED in search phase. Time in seconds
 #define LOOK_FOR_TEGRA_LED_SPEED 300 // how fast to blink when searching.
 #define DELAY_BEFORE_FLASH_WRITE_SECONDS 2 //get out of jail card. Press reset during this time and payload won`t be increased
+#define STRAPS_ENABLED 1 // Enable or disable straps. 1 = Enabled. 0 = disabled
 
 //set input/output pin numbers & times
 //#define PAYLOAD_INCREASE_PIN 1               //payload increase pin - touch to ground by default.
@@ -32,7 +33,7 @@
 #define ONBOARD_LED 13
 
 //includes
-#include "hekateload.h"
+#include "s2load.h"
 #include "usb_setup.h"
 
 FlashStorage(stored_payload, int);
@@ -44,15 +45,18 @@ int startblink = 1;
 int currentblink;
 
 void dropstraps() {
+  if (STRAPS_ENABLED == 1) {
   pinMode(JOYCON_STRAP_PIN, OUTPUT);
   pinMode(VOLUP_STRAP_PIN, OUTPUT);
   pinMode(ONBOARD_LED, OUTPUT);
   digitalWrite(JOYCON_STRAP_PIN, LOW);
   digitalWrite(VOLUP_STRAP_PIN, LOW);
   delayMicroseconds (RCM_STRAP_TIME_us);
+  } else return;
 }
 
 void normalstraps(){
+  pinMode(ONBOARD_LED, OUTPUT);
   pinMode(JOYCON_STRAP_PIN, INPUT);
   pinMode(VOLUP_STRAP_PIN, INPUT);
   pinMode(WAKEUP_PIN_RISING, INPUT);
