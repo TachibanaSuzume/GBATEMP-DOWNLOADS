@@ -17,7 +17,6 @@
 #define ENABLE_STRAPS_ON_HARD_RESET 0 //If on, will drop straps at every cold-boot as well as when wakeup occurs. If all straps are disabled, this will have no effect
 //#define ENABLE_ALL_STRAPS 0 //All straps are enabled / disabled, in all circumstances. 0 = Disabled. 1 = Enabled
 #define RESET_INSTEAD_OF_SLEEP 0 //Instead of sleeping after look for Tegra timeout, device will reset. This will loop until Tegra is found. Affects autoincrease. 1 = On, 0 = Off
-#define DEFAULT_MODE 1 // Mode 1 = 1 payload, Mode 2 = 3 payloads, Mode 3 = 8 payloads
 
 //set input/output pin numbers & times
 #define PAYLOAD_INCREASE_PIN 1     // Payload increase pin - touch to ground by default.
@@ -48,6 +47,7 @@ int AMOUNT_OF_PAYLOADS;
 int AUTO_INCREASE_PAYLOAD_on;
 int ENABLE_ALL_STRAPS;
 int FLASH_BEFORE_SEND_on;
+
 //includes
 #include "payload1.h"
 #include "usb_setup.h"
