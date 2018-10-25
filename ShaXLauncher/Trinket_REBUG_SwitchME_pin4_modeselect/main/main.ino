@@ -169,12 +169,13 @@ void blink_led() {
 }  
 
 void mode_blink_led() {
+  pinMode(ONBOARD_LED, OUTPUT);
   for (currentblink = 0; currentblink < newmode; ++currentblink) {
     setLedColor("black");
-    //digitalWrite(ONBOARD_LED, LOW);
+    digitalWrite(ONBOARD_LED, LOW);
     delayMicroseconds(PAYLOAD_FLASH_LED_OFF_TIME_SECONDS * 1000000);
     setLedColor("white");
-    //digitalWrite(ONBOARD_LED, HIGH);
+    digitalWrite(ONBOARD_LED, HIGH);
     delayMicroseconds(PAYLOAD_FLASH_LED_ON_TIME_SECONDS * 1000000);
   }
   setLedColor("black");
