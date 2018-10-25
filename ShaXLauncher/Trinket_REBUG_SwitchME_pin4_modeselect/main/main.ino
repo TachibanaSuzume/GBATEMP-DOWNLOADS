@@ -1,4 +1,4 @@
-// Sam_fusee_launcher - Credits to quantum_cross for original code
+// Sam_fusee_launcher - Credits to quantum_cross & atlas44 for original code
 // Mattytrogs multi-payload
 #include <Arduino.h>
 #include <Usb.h>
