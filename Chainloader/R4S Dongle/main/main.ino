@@ -31,7 +31,7 @@
 #define RCM_STRAP_TIME_us 1000000  // Amount of time to hold RCM_STRAP low and then launch payload
 
 //includes
-#include "s2load.h"
+#include "hekateload.h"
 #include "usb_setup.h"
 
 FlashStorage(stored_payload, int);

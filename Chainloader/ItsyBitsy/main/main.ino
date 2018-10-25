@@ -35,7 +35,7 @@
 #define ONBOARD_LED 13
 
 //includes
-#include "s2load.h"
+#include "hekateload.h"
 #include "usb_setup.h"
 
 FlashStorage(stored_payload, int);
